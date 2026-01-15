@@ -25,8 +25,22 @@ fn data_source_factory(uri: &str) -> Result<Box<dyn DataSource>, String> {
     // The scheme must be either tcp or file:
 
     match source_url.scheme() {
-        "tcp" => Ok(Box::new(online::TcpDataSource::new())),
-        "file" => Ok(Box::new(offline::FileDataSource::new())),
+        "tcp" => {
+            let mut ds = online::TcpDataSource::new();
+            let status = ds.open(uri);
+            if let Err(e) = status {   
+                return Err(format!("Failed to open data source {}: {}", uri, e));
+            }
+            Ok(Box::new(ds))
+        },
+        "file" => {
+            let mut ds = offline::FileDataSource::new();
+            let status = ds.open(uri);
+            if let Err(e) = status {    
+                return Err(format!("Failed to open data source {}: {}", uri, e));
+            }
+            Ok(Box::new(ds))
+        },
         _ => Err(format!("Unsupported URI scheme: {}", source_url.scheme())),
     }
  }
