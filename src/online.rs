@@ -5,6 +5,8 @@ use ringmaster_client;
 use crate::DataSource;
 use url::{Url, ParseError};
 
+const BUFFER_SIZE :usize = 4096*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
+
 /// This represents an online data source that is
 /// potentially remote.  At thist time, rather than reading
 /// blocks of data, we read one ring item at a time.
@@ -12,11 +14,18 @@ use url::{Url, ParseError};
 /// 
 pub struct TcpDataSource {
     ring : Option<ringmaster_client::RingBufferConsumer>,
+    buffer : [u8; BUFFER_SIZE],
+    bytes_in_buffer : usize,
+    cursor : usize,
 }
 impl TcpDataSource {
     pub fn new() -> TcpDataSource { 
+        
         TcpDataSource {
-            ring : None
+            ring : None,
+            buffer : [0; BUFFER_SIZE],
+            bytes_in_buffer : 0,
+            cursor : 0,
         }
 
     }
@@ -41,7 +50,14 @@ impl DataSource for TcpDataSource {
     }
     
     fn read(&mut self) -> Option<rust_ringitem_format::RingItem> {
-        None
+        if let Some(src) = self.ring.as_mut() {
+            let ring  = &mut src.consumer;
+
+            return None;
+
+        } else {
+            return None;                      // Data sourc ie not open.
+        }
     }
     fn close(&mut self) {
 
