@@ -1,7 +1,12 @@
 [package]
 name = "frib_datasource"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
+description = "Data sources for FRIB ringitem data"
+license = "LGPL-3.0-or-later"
+repository = "https://github.com/FRIBDAQ/rust_frib_datasource.git"
+homepage = "http://docs.nscl.msu.edu/daq"
+
 
 [dependencies]
 nscldaq_ringbuffer = "0.8.8"
