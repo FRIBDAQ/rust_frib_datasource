@@ -2,7 +2,7 @@ use rust_ringitem_format;// stubs for offline data sources:
 use crate::DataSource;
 use std::io;
 use std::fs;
-use url::{Url, ParseError};
+use url::Url;
 
 const READ_SIZE: usize = 4096*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
 ///
@@ -39,16 +39,23 @@ impl FileDataSource {
                 self.bytes_in_buffer = 0;
             }
             self.cursor = 0;
-            // Read more data to fill the buffer:
-            let mut temp_buffer = vec![0; 4096];
-            match source.read(&mut temp_buffer) {
-                Ok(n) => {
-                    self.buffer.extend_from_slice(&temp_buffer[..n]);
-                    self.bytes_in_buffer += n;
-                },
-                Err(e) => {
-                    eprintln!("Error reading from data source: {}", e);
-                    self.close();
+            // Read more data to fill the buffer -- or to EOF.
+            while self.bytes_in_buffer < READ_SIZE {
+                let mut temp_buffer = vec![0; 4096];
+                let status = {source.read(&mut temp_buffer)};
+                match status {
+                    Ok(n) => {
+                        if n == 0 {
+                            // EOF
+                            break;
+                        }   
+                        self.buffer.extend_from_slice(&temp_buffer[..n]);
+                        self.bytes_in_buffer += n;
+                    },
+                    Err(e) => {
+                        eprintln!("Error reading from data source: {}", e);
+                        
+                    }
                 }
             }
         }

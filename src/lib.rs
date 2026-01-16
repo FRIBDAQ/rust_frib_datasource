@@ -1,7 +1,7 @@
 pub mod online;
 pub mod offline;
 use rust_ringitem_format;
-use url::{Url, ParseError};
+use url::Url;
 pub trait DataSource {
     /// Open the data source to the specified URI.
     /// If a data source is already opened it should be closed.
@@ -33,7 +33,7 @@ pub trait DataSource {
 /// appropriate type of data source as a boxed dynamic DataSource implementing
 /// object.
 /// 
-fn data_source_factory(uri: &str) -> Result<Box<dyn DataSource>, String> {
+pub fn data_source_factory(uri: &str) -> Result<Box<dyn DataSource>, String> {
     let source_url = Url::parse(uri);
     if let Err(e) = source_url {
         return Err(format!("Failed to parse URI {}: {}", uri, e));

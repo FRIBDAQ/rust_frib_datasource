@@ -3,7 +3,7 @@ use nscldaq_ringbuffer;
 use ringmaster_client;
 
 use crate::DataSource;
-use url::{Url, ParseError};
+use url::Url;
 use std::time::Duration;
 
 const BUFFER_SIZE :usize = 4096*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
@@ -87,8 +87,8 @@ impl DataSource for TcpDataSource {
     }
     
     fn read(&mut self) -> Option<rust_ringitem_format::RingItem> {
-        if let Some(src) = self.ring.as_mut() {
-            let ring  = &mut src.consumer;
+        if let Some(_) = self.ring.as_mut() {
+            
             // If I don't have enough data for a header, try to fill:
 
             let mut remaining  = self.bytes_in_buffer - self.cursor;
@@ -112,7 +112,7 @@ impl DataSource for TcpDataSource {
             let bodysize = size - 2*size_of::<u32>();
             self.cursor += 2*size_of::<u32>();   // Move past the header.
 
-            for i in 0..bodysize {
+            for _i in 0..bodysize {
                 item.add(self.buffer[self.cursor]);
                 self.cursor += 1;
             }
