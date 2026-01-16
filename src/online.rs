@@ -126,6 +126,6 @@ impl DataSource for TcpDataSource {
         }
     }
     fn close(&mut self) {
-
+        self.ring = None;             // Dropping the consumer unregisters us with the ringmaster.
     }
 }
