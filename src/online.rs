@@ -60,7 +60,7 @@ impl TcpDataSource {
         
         TcpDataSource {
             ring : None,
-            buffer : Vec::new(),
+            buffer : vec![0;BUFFER_SIZE],  // Pre-allocate so it looks like an old array.
             bytes_in_buffer : 0,
             cursor : 0,
         }
