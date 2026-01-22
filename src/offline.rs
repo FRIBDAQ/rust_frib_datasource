@@ -129,8 +129,35 @@ impl DataSource for FileDataSource {
         // Construct a ring item from the point of the cursor
 
         let item_type = u32::from_le_bytes(self.buffer[self.cursor+size_of::<u32>()..self.cursor+2*size_of::<u32>()].try_into().unwrap());
-        let item_data = self.buffer[self.cursor+2*size_of::<u32>()..self.cursor+item_size].to_vec();
-        let mut ring_item = rust_ringitem_format::RingItem::new(item_type);
+        let mut item_data = self.buffer[self.cursor+2*size_of::<u32>()..self.cursor+item_size].to_vec();
+
+        // Figure out if there's a body header... this will be the case if the next u32 in the buffer
+        // is at least the size of a body header. If so, we need to pull out the timestamp, source id and
+        // barrier type and make a ring item with a body header, otherwise not.
+        // Note that the body header struct might not be packe so we use 5*size_of::<u32>
+        // the size, timestamp (u64), source, and lastly barrier type = 5 u32s.
+        let bhdr_size = u32::from_le_bytes(item_data[0..4].try_into().unwrap());
+        
+        let mut ring_item = if bhdr_size as usize  == 5*size_of::<u32>() {
+            let timestamp = u64::from_le_bytes(item_data[4..12].try_into().unwrap());
+            let source_id = u32::from_le_bytes(item_data[12..16].try_into().unwrap());
+            let barrier_type = u32::from_le_bytes(item_data[16..20].try_into().unwrap());
+            // Remove the body header from the item_data and make the item.
+
+            item_data.drain(0..20);
+
+            rust_ringitem_format::RingItem::new_with_body_header(item_type, timestamp, source_id, barrier_type)
+
+            
+        } else {
+            // Remove the null body header size from the data and make the ring item.
+            item_data.drain(0..4);                           // There's always a dummy size.
+
+            rust_ringitem_format::RingItem::new(item_type)
+
+        };
+
+
         ring_item.add_byte_vec(&item_data);
     
         // advance the cursor.
