@@ -12,7 +12,7 @@ const BUFFER_SIZE :usize = 4096*1024*1024;    // Size of buffer to read at a tim
 /// potentially remote. 
 pub struct TcpDataSource {
     ring : Option<ringmaster_client::RingBufferConsumer>,
-    buffer : [u8; BUFFER_SIZE],
+    buffer : Vec<u8>,
     bytes_in_buffer : usize,
     cursor : usize,
 }
@@ -60,7 +60,7 @@ impl TcpDataSource {
         
         TcpDataSource {
             ring : None,
-            buffer : [0; BUFFER_SIZE],
+            buffer : vec![0;BUFFER_SIZE],  // Pre-allocate so it looks like an old array.
             bytes_in_buffer : 0,
             cursor : 0,
         }
@@ -127,5 +127,22 @@ impl DataSource for TcpDataSource {
     }
     fn close(&mut self) {
         self.ring = None;             // Dropping the consumer unregisters us with the ringmaster.
+    }
+}
+
+// tests require the ring master
+#[cfg(test)]
+mod online_tests {
+    use super::*;
+    #[test]
+    fn create_1() {
+        // Creating a data source does not overflow stack:
+
+        let mut x = TcpDataSource::new();
+
+        // Open a nonexisting ring will faile:
+
+        let result = x.open("tcp://localhost/no_such_ring");
+        assert!(result.is_err());
     }
 }
