@@ -1,5 +1,5 @@
 use rust_ringitem_format;// stubs for offline data sources:
-use crate::DataSource;
+use crate::{DataSource, DataSink};
 use std::io;
 use std::fs;
 use url::Url;
@@ -171,4 +171,24 @@ impl DataSource for FileDataSource {
     fn close(&mut self) {
         self.source = None;
     }
+}
+
+/// Data sink.  THis can be either a file or stdout.
+/// 
+pub struct FileDataSink {
+
+}
+impl FileDataSink {
+    pub fn new() -> FileDataSink {
+        FileDataSink {}
+    }
+}
+impl DataSink for FileDataSink {
+    fn open(&mut self, uri: &str) -> Result<(), String> {
+        Ok(())
+    }
+    fn write(&mut self, item: &rust_ringitem_format::RingItem) -> Result<(), String> {
+        Ok(())
+    }
+    fn close(&mut self) {}
 }

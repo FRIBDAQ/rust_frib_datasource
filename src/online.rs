@@ -2,7 +2,7 @@ use rust_ringitem_format;
 use nscldaq_ringbuffer;
 use ringmaster_client;
 
-use crate::DataSource;
+use crate::{DataSource, DataSink};
 use url::Url;
 use std::time::Duration;
 
@@ -155,6 +155,24 @@ impl DataSource for TcpDataSource {
     }
 }
 
+/// Data sink to a ring buffer.  The ring buffer must be local.
+pub struct RingDataSink {
+
+}
+impl RingDataSink {
+    pub fn new() -> RingDataSink {
+        RingDataSink {}
+    }
+}
+impl DataSink for RingDataSink {
+    fn open(&mut self, uri: &str) -> Result<(), String> {
+        Ok(())
+    }
+    fn write(&mut self, item : &rust_ringitem_format::RingItem) -> Result<(), String> {
+        Ok(())
+    }
+    fn close(&mut self) {}
+}
 // tests require the ring master
 #[cfg(test)]
 mod online_tests {
