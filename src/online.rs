@@ -190,7 +190,7 @@ impl DataSink for RingDataSink {
             );
         }
         let host = host.unwrap().to_string();
-        if host.eq_ignore_ascii_case("localhost") {
+        if !host.eq_ignore_ascii_case("localhost") {
             return Err(
                 format!("Producer ring buffer URIs must use 'localhost' as the host not {}", 
                 host
