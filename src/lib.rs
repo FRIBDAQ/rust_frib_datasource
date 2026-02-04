@@ -87,6 +87,9 @@ pub fn data_source_factory(uri: &str) -> Result<Box<dyn DataSource>, String> {
  /// 
  /// Note we let the online sink worry about the host being local.
  ///
+ /// ### Parameters:
+ /// * uri - the URI of the desired data source ```file``` for a file and
+ /// ```tcp``` for a ringbuffer.
  pub fn data_sink_factory(uri: &str) -> Result<Box<dyn DataSink>, String> {
     let sink_url = Url::parse(uri);
     if let Err(e) = sink_url {

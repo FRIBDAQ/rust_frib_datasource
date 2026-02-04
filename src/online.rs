@@ -208,7 +208,15 @@ impl DataSink for RingDataSink {
         Ok(())
     }
     fn write(&mut self, item : &rust_ringitem_format::RingItem) -> Result<(), String> {
-        Ok(())
+        if let None = self.producer {
+            return Err("The ring data sink is not connecte to  a ringbuffer".to_string());
+        }
+        let p = self.producer.as_mut().unwrap();
+        match item.write_item(&mut p.ring) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Failed to write item to ring: {}", e))
+        }
+        
     }
     fn close(&mut self) {}
 }
