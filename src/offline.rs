@@ -233,5 +233,7 @@ impl DataSink for FileDataSink {
         }
         Ok(())
     }
-    fn close(&mut self) {}
+    fn close(&mut self) {
+        self.sink = None;                  // Close...even if not open :-)
+    }
 }
