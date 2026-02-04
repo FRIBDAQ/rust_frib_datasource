@@ -218,7 +218,9 @@ impl DataSink for RingDataSink {
         }
         
     }
-    fn close(&mut self) {}
+    fn close(&mut self) {
+        self.producer = None;             // Closed even if it wasn't open.
+    }
 }
 // tests require the ring master
 #[cfg(test)]
