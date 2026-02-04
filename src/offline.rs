@@ -221,6 +221,16 @@ impl DataSink for FileDataSink {
         Ok(())                  // If we get here.
     }
     fn write(&mut self, item: &rust_ringitem_format::RingItem) -> Result<(), String> {
+        match &mut self.sink {
+            None => {
+                return Err("File data sink is not open at write".to_string());
+            },
+            Some(abox) => {
+                if let Err(e) = item.write_item(abox) {
+                    return Err(format!("Failed to write ring item: {}", e));
+                }
+            },
+        }
         Ok(())
     }
     fn close(&mut self) {}
