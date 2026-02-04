@@ -2,7 +2,7 @@ use rust_ringitem_format;
 use nscldaq_ringbuffer;
 use ringmaster_client;
 
-use crate::DataSource;
+use crate::{DataSource, DataSink};
 use url::Url;
 use std::time::Duration;
 
@@ -155,6 +155,73 @@ impl DataSource for TcpDataSource {
     }
 }
 
+/// Data sink to a ring buffer.  The ring buffer must be local.
+pub struct RingDataSink {
+    producer : Option<ringmaster_client::RingBufferProducer>,
+}
+impl RingDataSink {
+    pub fn new() -> RingDataSink {
+        RingDataSink {
+            producer : None
+        }
+    }
+}
+impl DataSink for RingDataSink {
+    fn open(&mut self, uri: &str) -> Result<(), String> {
+        // CLose any existing producer:
+
+        self.producer = None;
+
+        // The uri must parse, must be a tcp: scheme and host must be localhost:
+
+        let sink_uri = Url::parse(uri);
+        if let Err(e) = sink_uri {
+            return Err(format!("{} does not parse as a  URI: {}", uri, e));
+        }
+        let sink_uri = sink_uri.unwrap();
+        if sink_uri.scheme() != "tcp" {
+            return Err("Ringbuffer URIs must be tcp://host/ring".to_string());
+        }
+        let host = sink_uri.host();
+        if let None = host {
+            return Err(
+                "Ring buffer URIs must have a host and it must be 'localhost'"
+                .to_string()
+            );
+        }
+        let host = host.unwrap().to_string();
+        if host.eq_ignore_ascii_case("localhost") {
+            return Err(
+                format!("Producer ring buffer URIs must use 'localhost' as the host not {}", 
+                host
+            ));
+        }
+        let ringname = sink_uri.path();
+        match ringmaster_client::RingBufferProducer::create_and_attach(&ringname) {
+            Err(e) => {
+                return Err(format!("Failed to attach ring {} : {}", ringname, e));
+            },
+            Ok(p) => {
+                self.producer = Some(p);
+            }
+        }
+        Ok(())
+    }
+    fn write(&mut self, item : &rust_ringitem_format::RingItem) -> Result<(), String> {
+        if let None = self.producer {
+            return Err("The ring data sink is not connecte to  a ringbuffer".to_string());
+        }
+        let p = self.producer.as_mut().unwrap();
+        match item.write_item(&mut p.ring) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Failed to write item to ring: {}", e))
+        }
+        
+    }
+    fn close(&mut self) {
+        self.producer = None;             // Closed even if it wasn't open.
+    }
+}
 // tests require the ring master
 #[cfg(test)]
 mod online_tests {

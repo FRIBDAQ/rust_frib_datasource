@@ -1,6 +1,7 @@
 use rust_ringitem_format;// stubs for offline data sources:
-use crate::DataSource;
+use crate::{DataSource, DataSink};
 use std::io;
+use std::io::Write;
 use std::fs;
 use url::Url;
 
@@ -170,5 +171,69 @@ impl DataSource for FileDataSource {
     }
     fn close(&mut self) {
         self.source = None;
+    }
+}
+
+/// Data sink.  THis can be either a file or stdout.
+/// 
+pub struct FileDataSink {
+    sink : Option<Box<dyn Write>>  // To allow stdout.
+}
+impl FileDataSink {
+    pub fn new() -> FileDataSink {
+        FileDataSink {
+            sink: None
+        }
+    }
+}
+impl DataSink for FileDataSink {
+    fn open(&mut self, uri: &str) -> Result<(), String> {
+        // Close any existing sink first:
+
+        self.sink = None;
+
+        // Parse the URI and deal with it.
+
+        let sink_uri = Url::parse(uri);
+        if let Err(e) = sink_uri {
+            return Err(format!("Failed to parse sink {} as a URI {}", uri, e));
+        }
+        let sink_uri = sink_uri.unwrap();
+        if sink_uri.scheme() != "file" {
+            return Err(format!(
+                "File data sinks require file: uris was: {}", sink_uri.scheme()
+            ));
+        }
+        let path = sink_uri.path();
+
+        if path == "-" {     // Stdout.
+            self.sink = Some(Box::new(io::stdout()));
+        } else  {            // filesystem path.
+            match  fs::File::create(&path) {
+                Err(e) => {
+                    return Err(format!("Failed to create file {}: {}", path, e));
+                },
+                Ok(f) => {
+                    self.sink=Some(Box::new(f));
+                }
+            };
+        }
+        Ok(())                  // If we get here.
+    }
+    fn write(&mut self, item: &rust_ringitem_format::RingItem) -> Result<(), String> {
+        match &mut self.sink {
+            None => {
+                return Err("File data sink is not open at write".to_string());
+            },
+            Some(abox) => {
+                if let Err(e) = item.write_item(abox) {
+                    return Err(format!("Failed to write ring item: {}", e));
+                }
+            },
+        }
+        Ok(())
+    }
+    fn close(&mut self) {
+        self.sink = None;                  // Close...even if not open :-)
     }
 }

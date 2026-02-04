@@ -25,7 +25,24 @@ pub trait DataSource {
     fn close(&mut self);
 }
 
-
+pub trait DataSink {
+    /// Open the data source to the specified URI.
+    /// if a data source is already open, it should be closed.
+    /// 
+    /// ### Parameters:
+    ///    uri - the URI of the data source. Note if the data_sink_factory is used,
+    ///      This will be a suitable URI for the type of source.
+    /// 
+    fn open(&mut self, uri: &str) -> Result<(), String>;
+    ///
+    /// Write a ring item to the sink.
+    ///
+    fn write(&mut self, item : &rust_ringitem_format::RingItem) -> Result<(), String>;
+    ///
+    /// Close the sink.  After this is done, all write's will fail.
+    /// 
+    fn close(&mut self);
+}
 
 
 ///
@@ -61,4 +78,42 @@ pub fn data_source_factory(uri: &str) -> Result<Box<dyn DataSource>, String> {
         },
         _ => Err(format!("Unsupported URI scheme: {}", source_url.scheme())),
     }
+ }
+
+ ///
+ /// data source factory for sinks.  Given a URI, return a boxed data sink
+ /// of the appropriate type.  The only exposed methods are the DataSink
+ /// trait methods.
+ /// 
+ /// Note we let the online sink worry about the host being local.
+ ///
+ /// ### Parameters:
+ /// * uri - the URI of the desired data source ```file``` for a file and
+ /// ```tcp``` for a ringbuffer.
+ pub fn data_sink_factory(uri: &str) -> Result<Box<dyn DataSink>, String> {
+    let sink_url = Url::parse(uri);
+    if let Err(e) = sink_url {
+        return Err(format!("Failed to parse the sink specification as a URI: {}", e));
+    }
+    let sink_url = sink_url.unwrap();
+    match sink_url.scheme() {
+        "tcp" => {
+            let mut sink = online::RingDataSink::new();
+            let status = sink.open(uri);
+            if let Err(e) = status {
+                return Err(format!("Unable to open ringbuffer sink {}", e));
+            }
+            Ok(Box::new(sink))
+        },
+        "file" => {
+            let mut sink = offline::FileDataSink::new();
+            if let Err(e) = sink.open(uri) {
+                return Err(format!("Could not open file data sink: {}", e));
+            }
+            Ok(Box::new(sink))
+        },
+        _ => Err(format!("unsupported URI Scheme: {}", sink_url.scheme())),
+    }
+
+    
  }
