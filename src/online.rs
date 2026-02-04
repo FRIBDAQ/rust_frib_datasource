@@ -196,7 +196,8 @@ impl DataSink for RingDataSink {
                 host
             ));
         }
-        let ringname = sink_uri.path();
+	// Note the path has a leading / from the URI.
+        let ringname = &sink_uri.path()[1..].to_string();
         match ringmaster_client::RingBufferProducer::create_and_attach(&ringname) {
             Err(e) => {
                 return Err(format!("Failed to attach ring {} : {}", ringname, e));
