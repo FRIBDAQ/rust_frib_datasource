@@ -1,6 +1,7 @@
 use rust_ringitem_format;// stubs for offline data sources:
 use crate::{DataSource, DataSink};
 use std::io;
+use std::io::Write;
 use std::fs;
 use url::Url;
 
@@ -176,16 +177,48 @@ impl DataSource for FileDataSource {
 /// Data sink.  THis can be either a file or stdout.
 /// 
 pub struct FileDataSink {
-
+    sink : Option<Box<dyn Write>>  // To allow stdout.
 }
 impl FileDataSink {
     pub fn new() -> FileDataSink {
-        FileDataSink {}
+        FileDataSink {
+            sink: None
+        }
     }
 }
 impl DataSink for FileDataSink {
     fn open(&mut self, uri: &str) -> Result<(), String> {
-        Ok(())
+        // Close any existing sink first:
+
+        self.sink = None;
+
+        // Parse the URI and deal with it.
+
+        let sink_uri = Url::parse(uri);
+        if let Err(e) = sink_uri {
+            return Err(format!("Failed to parse sink {} as a URI {}", uri, e));
+        }
+        let sink_uri = sink_uri.unwrap();
+        if sink_uri.scheme() != "file" {
+            return Err(format!(
+                "File data sinks require file: uris was: {}", sink_uri.scheme()
+            ));
+        }
+        let path = sink_uri.path();
+
+        if path == "-" {     // Stdout.
+            self.sink = Some(Box::new(io::stdout()));
+        } else  {            // filesystem path.
+            match  fs::File::create(&path) {
+                Err(e) => {
+                    return Err(format!("Failed to create file {}: {}", path, e));
+                },
+                Ok(f) => {
+                    self.sink=Some(Box::new(f));
+                }
+            };
+        }
+        Ok(())                  // If we get here.
     }
     fn write(&mut self, item: &rust_ringitem_format::RingItem) -> Result<(), String> {
         Ok(())
