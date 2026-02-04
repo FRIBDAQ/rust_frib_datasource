@@ -28,7 +28,7 @@ located.  The second is the name of the ringbuffer in that host.  For example:
 tcp://spdaq08.frib.msu.edu/aring
 ```
 
-Fetches is a data source from the ring named ```aring``` in the host
+Is a data source from the ring named ```aring``` in the host
 ```spdaq08.frib.msu.edu```
 
 
