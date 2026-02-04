@@ -157,15 +157,54 @@ impl DataSource for TcpDataSource {
 
 /// Data sink to a ring buffer.  The ring buffer must be local.
 pub struct RingDataSink {
-
+    producer : Option<ringmaster_client::RingBufferProducer>,
 }
 impl RingDataSink {
     pub fn new() -> RingDataSink {
-        RingDataSink {}
+        RingDataSink {
+            producer : None
+        }
     }
 }
 impl DataSink for RingDataSink {
     fn open(&mut self, uri: &str) -> Result<(), String> {
+        // CLose any existing producer:
+
+        self.producer = None;
+
+        // The uri must parse, must be a tcp: scheme and host must be localhost:
+
+        let sink_uri = Url::parse(uri);
+        if let Err(e) = sink_uri {
+            return Err(format!("{} does not parse as a  URI: {}", uri, e));
+        }
+        let sink_uri = sink_uri.unwrap();
+        if sink_uri.scheme() != "tcp" {
+            return Err("Ringbuffer URIs must be tcp://host/ring".to_string());
+        }
+        let host = sink_uri.host();
+        if let None = host {
+            return Err(
+                "Ring buffer URIs must have a host and it must be 'localhost'"
+                .to_string()
+            );
+        }
+        let host = host.unwrap().to_string();
+        if host.eq_ignore_ascii_case("localhost") {
+            return Err(
+                format!("Producer ring buffer URIs must use 'localhost' as the host not {}", 
+                host
+            ));
+        }
+        let ringname = sink_uri.path();
+        match ringmaster_client::RingBufferProducer::create_and_attach(&ringname) {
+            Err(e) => {
+                return Err(format!("Failed to attach ring {} : {}", ringname, e));
+            },
+            Ok(p) => {
+                self.producer = Some(p);
+            }
+        }
         Ok(())
     }
     fn write(&mut self, item : &rust_ringitem_format::RingItem) -> Result<(), String> {
