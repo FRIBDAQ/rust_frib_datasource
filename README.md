@@ -6,14 +6,20 @@ access of FRIB/NSCLDAQ ring item data.  Ring items can come from live
 
 Data sources are specified by URIs of the form:
 
+Data sources and data sinks can be created. 
+
+See the crate documentation online pointed to at 
+https://crates.io/crates/frib_datasource
+
+
 sourcetype://source-specification
 
-Valid sourcetypes are:
+Valid source/sink types are:
 
 * ```tcp``` data comes from a (possibly) remote ring item.
 * ```file``` data comes from a file.
 
-## Online (tcp) source-specification
+## Online (tcp) source/sink-specification
 
 These have two components.  The first is the host on which the ring item is
 located.  The second is the name of the ringbuffer in that host.  For example:
@@ -31,12 +37,14 @@ ringmaster must be running in all involved systems.  In the example URI above,
 the ringmaster and port manager must be running in both the requesting host and
 spdaq08.frib.msu.edu
 
+If specifying a sink, the host _must_ be ```localhost```
+
 ## Offline (file) source-specification
 
 This is just the path to the file that contains the data.  For example:
 
 ```
-file://run-0001-01.evt
+file://./run-0001-01.evt
 ```
 
 Specifies ```run-0001-01.evt``` in the current working directory.
