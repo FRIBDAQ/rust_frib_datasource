@@ -5,7 +5,7 @@ use std::io::Write;
 use std::fs;
 use url::Url;
 
-const READ_SIZE: usize = 4096*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
+const READ_SIZE: usize = 4*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
 ///
 /// A file data source represents a data source that is a disk file.
 /// Rather than reading a ring item at a time we read in blocks of data.

@@ -6,7 +6,7 @@ use crate::{DataSource, DataSink};
 use url::Url;
 use std::time::Duration;
 
-const BUFFER_SIZE :usize = 4096*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
+const BUFFER_SIZE :usize = 4*1024*1024;    // Size of buffer to read at a time.  Should be big enough to hold multiple ring items.
 
 /// This represents an online data source that is
 /// potentially remote. 
