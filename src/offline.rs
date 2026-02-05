@@ -172,6 +172,7 @@ impl DataSource for FileDataSource {
     fn close(&mut self) {
         self.source = None;
     }
+    
 }
 
 /// Data sink.  THis can be either a file or stdout.
@@ -235,5 +236,10 @@ impl DataSink for FileDataSink {
     }
     fn close(&mut self) {
         self.sink = None;                  // Close...even if not open :-)
+    }
+    fn flush(&mut self) {
+        if let Some(sink) = &mut self.sink {
+            sink.flush().expect("Failed to flush output offline data sourcde");
+        }
     }
 }

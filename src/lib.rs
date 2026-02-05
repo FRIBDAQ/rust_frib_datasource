@@ -42,6 +42,10 @@ pub trait DataSink {
     /// Close the sink.  After this is done, all write's will fail.
     /// 
     fn close(&mut self);
+    ///
+    /// If supported by the sink, flush any buffered data to the sink.
+    /// 
+    fn flush(&mut self) {}
 }
 
 
